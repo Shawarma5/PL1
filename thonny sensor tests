@@ -1,0 +1,80 @@
+main oc test, rmotors are ramped to avoid trip
+
+from machine import Pin, PWM
+import time
+
+reset = Pin(10, Pin.OUT, value=0)
+status = Pin(11, Pin.IN)            # 1 = OK, 0 = latched
+pwms = {}
+
+def all_off():
+    for g in range(2, 10):          # GP2-GP9 low = every bridge coasts
+        if g in pwms:
+            pwms[g].deinit(); del pwms[g]
+        Pin(g, Pin.OUT, value=0)
+
+def ok():
+ ramp   return "enabled" if status.value() else "LATCHED"
+
+def clear_latch():
+    all_off()
+    reset.value(1); time.sleep_ms(300); reset.value(0)
+    time.sleep_ms(20)
+    print(ok())
+
+def ramp(bridge, direction, ms=300, freq=2000):
+    # 1 = forward (PWM Va, Vb low); -1 = reverse (PWM Vb, Va low)
+    va, vb = 2*(bridge-1) + 2, 2*(bridge-1) + 3
+    for g in (va, vb):              # start from coast
+        if g in pwms:
+            pwms[g].deinit(); del pwms[g]
+        Pin(g, Pin.OUT, value=0)
+    time.sleep_ms(100)
+    pwm_gpio = va if direction > 0 else vb
+    p = PWM(Pin(pwm_gpio)); p.freq(freq); p.duty_u16(0)
+    pwms[pwm_gpio] = p
+    steps = 30
+    for i in range(1, steps + 1):
+        p.duty_u16(65535 * i // steps)
+        time.sleep_ms(ms // steps)
+        if not status.value():
+            print("TRIPPED at", 100 * i // steps, "% duty")
+            return
+    print("running,", ok())
+
+all_off()
+clear_latch()
+
+
+
+
+induction sensor
+
+
+from machine import Pin
+import time
+ 
+SENSOR_PIN = 16   
+sensor = Pin(SENSOR_PIN, Pin.IN, Pin.PULL_UP)
+led = Pin("LED", Pin.OUT)   
+
+last = None
+count = 0
+print("on".format(SENSOR_PIN))
+ 
+while True:
+    metal = sensor.value() == 0
+    led.value(metal)
+ 
+    if metal != last:                 
+        if metal:
+            count += 1
+            print("washer (#{})".format(count))
+        else:
+            print("no washer")
+        last = metal
+ 
+    time.sleep_ms(10)
+ 
+
+
