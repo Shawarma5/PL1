@@ -23,37 +23,39 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico CACHE STRING "Board type")
+set(PICO_BOARD pico_w CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
-project(test2 C CXX ASM)
+project(rover C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(test2 test2.cpp )
+add_executable(rover rover.cpp overcurrent.cpp)
 
-pico_set_program_name(test2 "test2")
-pico_set_program_version(test2 "0.1")
+pico_set_program_name(rover "rover")
+pico_set_program_version(rover "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(test2 0)
-pico_enable_stdio_usb(test2 0)
+pico_enable_stdio_uart(rover 0)
+pico_enable_stdio_usb(rover 1)
 
 # Add the standard library to the build
-target_link_libraries(test2
-        pico_stdlib
-        hardware_pwm
-)
+target_link_libraries(rover pico_stdlib hardware_pwm hardware_gpio hardware_irq)
 
 # Add the standard include files to the build
-target_include_directories(test2 PRIVATE
+target_include_directories(rover PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
-pico_add_extra_outputs(test2)
+# Add any user requested libraries
+target_link_libraries(rover 
+        
+        )
+
+pico_add_extra_outputs(rover)
 
