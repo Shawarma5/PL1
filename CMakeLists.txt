@@ -34,6 +34,7 @@ add_executable(rover
         rover.cpp
         overcurrent.cpp
         tape.cpp
+        encoder.cpp
 )
 
 pico_set_program_name(rover "rover")

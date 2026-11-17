@@ -3,6 +3,8 @@
 #include "pico/stdlib.h"
 #include <hardware/pwm.h>
 #include "overcurrent.h"  
+#include "tape.h"
+#include "encoder.hpp"
 #include <math.h> 
 
 uint fr_a = 8, fr_b = 9, //front right motor pins
@@ -11,6 +13,8 @@ uint fr_a = 8, fr_b = 9, //front right motor pins
      bl_a = 2, bl_b = 3; //back left motor pins
 
 //put other pin definitions here
+uint fl_enc = 12, fr_enc = 13, //front encoder pins
+     bl_enc = 21, br_enc = 22; //back encoder pins
 
 //MIN Speed 20000
 
@@ -116,7 +120,6 @@ class chassis {
 int main() {
     //init stdio
     stdio_init_all();
-    int count = 0;
 
     Motor front_right_motor(fr_a, fr_b);
     Motor front_left_motor(fl_a, fl_b);
@@ -127,41 +130,75 @@ int main() {
     oc::init();
     bool oc_was_ok = true;
 
-    while (count < 10) {
+    tape::init();
+
+    Encoder fl_encoder(fl_enc), fr_encoder(fr_enc), bl_encoder(bl_enc), br_encoder(br_enc);
+    Encoder* encoders[4] = {&fl_encoder, &fr_encoder, &bl_encoder, &br_encoder};
+    for (Encoder* e : encoders) e->init();
+
+    Motor* motors[4] = {&front_left_motor, &front_right_motor, &back_left_motor, &back_right_motor};
+    int test_speed = 40000;
+
+    //stop and pause first so a direction change never switches straight over
+    auto drive_all = [&](int speed) {
+        for (Motor* m : motors) m->setSpeed(0);
+        sleep_ms(20);
+        if (speed != 0) {
+            for (Motor* m : motors) m->setSpeed(speed);
+        }
+    };
+
+    bool show_tape = false, show_enc = false;
+    uint32_t last_print = 0;
+    const char* help = "commands: f forward, b back, s stop, t tape, e encoders, o oc status, h help\n";
+    sleep_ms(2000);
+    printf("%s", help);
+
+    while (true) {
         // check oc latch every loop
         bool oc_ok = oc::motors_allowed();
         if (!oc_ok && oc_was_ok) {
-            printf("trip #%lu\n", (unsigned long)oc::trip_count());
+            printf("trip #%lu, motors stopped\n", (unsigned long)oc::trip_count());
+            drive_all(0);
         }
         if (oc_ok && !oc_was_ok) {
             printf("clear\n");
         }
         oc_was_ok = oc_ok;
 
-        if (oc_ok) {
-            printf("hello world\n"); //placeholder for motor control code
-        } else {
-            
+        tape::update();
+
+        //serial test commands
+        switch (getchar_timeout_us(0)) {
+            case 'f': drive_all(test_speed); break;
+            case 'b': drive_all(-test_speed); break;
+            case 's': drive_all(0); break;
+            case 't': show_tape = !show_tape; break;
+            case 'e': show_enc = !show_enc; break;
+            case 'o': printf("oc %s, trips %lu\n", oc_ok ? "ok" : "LATCHED", (unsigned long)oc::trip_count()); break;
+            case 'h': printf("%s", help); break;
+            default: break;
         }
 
-        front_right_motor.setSpeed(62500); //placeholder for motor control code
-        front_left_motor.setSpeed(60000); //placeholder for motor control code
-        back_right_motor.setSpeed(62500); //placeholder for motor control code
-        back_left_motor.setSpeed(60000); //placeholder for motor control code
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+        if ((show_tape || show_enc) && now - last_print >= 200) {
+            last_print = now;
+            if (show_tape) {
+                printf("tape BL %4lu%s BR %4lu%s FL %4lu%s FR %4lu%s\n",
+                       (unsigned long)tape::raw(tape::BL), tape::on_tape(tape::BL) ? "*" : " ",
+                       (unsigned long)tape::raw(tape::BR), tape::on_tape(tape::BR) ? "*" : " ",
+                       (unsigned long)tape::raw(tape::FL), tape::on_tape(tape::FL) ? "*" : " ",
+                       (unsigned long)tape::raw(tape::FR), tape::on_tape(tape::FR) ? "*" : " ");
+            }
+            if (show_enc) {
+                printf("enc FL %lu %.0frpm  FR %lu %.0frpm  BL %lu %.0frpm  BR %lu %.0frpm\n",
+                       (unsigned long)fl_encoder.getTicks(), (double)fl_encoder.getRPM(),
+                       (unsigned long)fr_encoder.getTicks(), (double)fr_encoder.getRPM(),
+                       (unsigned long)bl_encoder.getTicks(), (double)bl_encoder.getRPM(),
+                       (unsigned long)br_encoder.getTicks(), (double)br_encoder.getRPM());
+            }
+        }
 
-        sleep_ms(1000); 
-
-         count++;
-         printf("count: %d\n", count);
+        sleep_ms(5);
     }
-
-    front_right_motor.setSpeed(0); //placeholder for motor control code
-    front_left_motor.setSpeed(0); //placeholder for motor control code
-    back_right_motor.setSpeed(0); //placeholder for motor control code
-    back_left_motor.setSpeed(0); //placeholder for motor control code
-
-    while (1) {
-        sleep_ms(1000);
-    }
-    
 }
