@@ -1,0 +1,22 @@
+from machine import Pin
+import time
+
+
+SENSORS = {"BL": 17, "BR": 18, "FL": 19, "FR": 20}
+TIMEOUT_US = 3000   
+def read_qre(gpio):
+    p = Pin(gpio, Pin.OUT)
+    p.value(1)                      #cap charge
+    time.sleep_us(10)
+    p.init(Pin.IN, pull=None)       #sensor drain
+    start = time.ticks_us()
+    while p.value() == 1:           #low time
+        if time.ticks_diff(time.ticks_us(), start) > TIMEOUT_US:
+            break
+    return time.ticks_diff(time.ticks_us(), start)
+
+while True:
+    for name, gpio in SENSORS.items():
+        print(name, read_qre(gpio), end="   ")
+    print()
+    time.sleep_ms(200)
