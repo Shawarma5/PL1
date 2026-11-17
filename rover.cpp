@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <cstdlib>
+#include "tape.h"
 #include "pico/stdlib.h"
 #include <hardware/pwm.h>
 #include "overcurrent.h"  
@@ -123,45 +124,58 @@ int main() {
     Motor back_right_motor(br_a, br_b);
     Motor back_left_motor(bl_a, bl_b);
 
+    tape::init(); //initialize tape sensors
+
     // start oc before motors
-    oc::init();
-    bool oc_was_ok = true;
+    //oc::init();
+    //bool oc_was_ok = true;
 
     while (count < 10) {
         // check oc latch every loop
-        bool oc_ok = oc::motors_allowed();
-        if (!oc_ok && oc_was_ok) {
-            printf("trip #%lu\n", (unsigned long)oc::trip_count());
-        }
-        if (oc_ok && !oc_was_ok) {
-            printf("clear\n");
-        }
-        oc_was_ok = oc_ok;
+        // bool oc_ok = oc::motors_allowed();
+        // if (!oc_ok && oc_was_ok) {
+        //     printf("trip #%lu\n", (unsigned long)oc::trip_count());
+        // }
+        // if (oc_ok && !oc_was_ok) {
+        //     printf("clear\n");
+        // }
+        // oc_was_ok = oc_ok;
 
-        if (oc_ok) {
-            printf("hello world\n"); //placeholder for motor control code
-        } else {
+        // if (oc_ok) {
+        //     printf("hello world\n"); //placeholder for motor control code
+        // } else {
             
-        }
+        // }
 
-        front_right_motor.setSpeed(62500); //placeholder for motor control code
-        front_left_motor.setSpeed(60000); //placeholder for motor control code
-        back_right_motor.setSpeed(62500); //placeholder for motor control code
-        back_left_motor.setSpeed(60000); //placeholder for motor control code
+        // front_right_motor.setSpeed(62500); //placeholder for motor control code
+        // front_left_motor.setSpeed(60000); //placeholder for motor control code
+        // back_right_motor.setSpeed(62500); //placeholder for motor control code
+        // back_left_motor.setSpeed(60000); //placeholder for motor control code
 
         sleep_ms(1000); 
 
-         count++;
-         printf("count: %d\n", count);
+        //  count++;
+        //  printf("count: %d\n", count);
+
+        tape::update(); //update tape readings
+    
+        if (tape::on_tape(tape::FL) || tape::on_tape(tape::FR)) {
+        //chassis.stop(); 
+        printf(" front edge hit the boundary\n");
+        }
+        uint32_t t = tape::raw(tape::BL); // raw read
+        printf("troubleshooting\n");
+        printf("raw reading: %d\n", t);
+
     }
 
-    front_right_motor.setSpeed(0); //placeholder for motor control code
-    front_left_motor.setSpeed(0); //placeholder for motor control code
-    back_right_motor.setSpeed(0); //placeholder for motor control code
-    back_left_motor.setSpeed(0); //placeholder for motor control code
+    // front_right_motor.setSpeed(0); //placeholder for motor control code
+    // front_left_motor.setSpeed(0); //placeholder for motor control code
+    // back_right_motor.setSpeed(0); //placeholder for motor control code
+    // back_left_motor.setSpeed(0); //placeholder for motor control code
 
-    while (1) {
-        sleep_ms(1000);
-    }
+    // while (1) {
+    //     sleep_ms(1000);
+    // }
     
 }
