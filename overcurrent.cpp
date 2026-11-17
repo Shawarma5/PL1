@@ -2,7 +2,7 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
-#include <intctrl.h>
+//#include <intctrl.h>
 
 namespace oc {
 namespace {
