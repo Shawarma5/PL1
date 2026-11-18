@@ -2,9 +2,9 @@
 #include "hardware/pwm.h"
 #include "hardware/clocks.h"
 
-#define MAGNET_PIN   24
-#define ARM_PIN      21     // servo 1: arm that carries the electromagnet
-#define DEPOSIT_PIN  22     // servo 2: deposits at the end
+#define MAGNET_PIN   21
+#define ARM_PIN      19     // servo 1: arm that carries the electromagnet
+#define DEPOSIT_PIN  20     // servo 2: deposits at the end
 
 #define ARM_DOWN       10   // electromagnet next to the washer
 #define ARM_UP        170   // reversed all the way, over the other container
