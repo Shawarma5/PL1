@@ -6,10 +6,10 @@
 #define ARM_PIN      19     // servo 1: arm that carries the electromagnet
 #define DEPOSIT_PIN  20     // servo 2: deposits at the end
 
-#define ARM_DOWN       10   // electromagnet next to the washer
-#define ARM_UP        170   // reversed all the way, over the other container
+#define ARM_DOWN       0   // electromagnet next to the washer
+#define ARM_UP        110   // reversed all the way, over the other container
 #define DEPOSIT_HOME   90
-#define DEPOSIT_OPEN  160
+#define DEPOSIT_OPEN  180
 
 void servo_init(uint pin)
 {
